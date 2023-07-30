@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset-eval",
         type=str,
-        choices=["ECSSD", "DUT-OMRON", "DUTS-TEST", "VOC07", "VOC12", "COCO20k"],
+        choices=["ECSSD", "DUT-OMRON", "DUTS-TEST", "VOC07", "VOC12", "COCO20k", "range_images_val"],
         help="Name of evaluation dataset."
     )
     parser.add_argument(

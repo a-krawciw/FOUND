@@ -64,6 +64,16 @@ def set_dataset_dir(dataset_name, root_dir):
         img_dir = dataset_dir
         gt_dir = dataset_dir
 
+    elif dataset_name == "range_images_train":
+        dataset_dir = os.path.join(root_dir, "range_images_train")
+        img_dir = os.path.join(dataset_dir, "range")
+        gt_dir = os.path.join(dataset_dir, "mask")
+
+    elif dataset_name == "range_images_val":
+        dataset_dir = os.path.join(root_dir, "range_images_val")
+        img_dir = os.path.join(dataset_dir, "range")
+        gt_dir = os.path.join(dataset_dir, "mask")
+
     else:
         raise ValueError(f"Unknown dataset {dataset_name}")
     
@@ -107,6 +117,15 @@ def build_dataset(
         )
 
     return dataset
+
+class DuplicateChannels (torch.nn.Module):
+
+    def __init__(self, output_channels=1) -> None:
+        super().__init__()
+        self.out_chan = output_channels
+
+    def forward(self, x):
+        return torch.cat([x for _ in range(self.out_chan)], 0)
 
 
 class FoundDataset(Dataset):
@@ -165,7 +184,7 @@ class FoundDataset(Dataset):
         # Transformations
         if self.for_eval:
             full_img_transform, no_norm_full_img_transform = self.get_init_transformation(
-                isVOC="VOC" in name
+                isVOC="VOC" in name, isRange="range" in name
             )
             self.full_img_transform = full_img_transform
             self.no_norm_full_img_transform = no_norm_full_img_transform
@@ -180,17 +199,24 @@ class FoundDataset(Dataset):
         self.ignore_index = -1
         self.mean = NORMALIZE.mean
         self.std = NORMALIZE.std
-        self.to_tensor_and_normalize = T.Compose([T.ToTensor(), NORMALIZE])
+        if "range" in self.name:
+            self.to_tensor_and_normalize = T.Compose([T.ToTensor(), DuplicateChannels(3), NORMALIZE])
+        else:
+            self.to_tensor_and_normalize = T.Compose([T.ToTensor(), NORMALIZE])
         self.normalize = NORMALIZE
 
         if config is not None and self.use_aug:
             self._set_aug(config)
 
 
-    def get_init_transformation(self, isVOC: bool = False):
+    def get_init_transformation(self, isVOC: bool = False, isRange = False):
         if isVOC:
             t = T.Compose([T.PILToTensor(), T.ConvertImageDtype(torch.float), NORMALIZE])
             t_nonorm = T.Compose([T.PILToTensor(), T.ConvertImageDtype(torch.float)])
+            return t, t_nonorm
+        elif isRange:
+            t = T.Compose([T.ToTensor(), DuplicateChannels(3),  NORMALIZE])
+            t_nonorm = T.Compose([T.ToTensor(), DuplicateChannels(3)])
             return t, t_nonorm
 
         else:
@@ -354,6 +380,16 @@ class FoundDataset(Dataset):
             # empty mask since no gt mask, only class label
             zeros = np.zeros(np.array(img).shape[:2])
             mask_gt = Image.fromarray(zeros)
+
+        elif "range" in self.name:
+            img_path = self.list_images[idx]
+            with open(img_path, "rb") as f:
+                img = Image.open(f)
+                img = img.convert("F")
+                im_name = img_path.split("/")[-1]
+                mask_gt = Image.open(
+                    os.path.join(self.gt_dir, im_name.replace(".jpg", ".png"))
+                ).convert("I")
 
         # For all others
         else:

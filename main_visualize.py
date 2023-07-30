@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import numpy as np
 import torch
 import argparse
 import torch.nn as nn
@@ -22,6 +23,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from model import FoundModel
 from misc import load_config
+from datasets.datasets import DuplicateChannels
 from torchvision import transforms as T
 
 NORMALIZE = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
@@ -69,6 +71,7 @@ if __name__ == "__main__":
     # Load the image
     with open(args.img_path, "rb") as f:
         img = Image.open(f)
+        print(img.mode)
         img = img.convert("RGB")
 
         t = T.Compose([T.ToTensor(), NORMALIZE])
@@ -91,7 +94,7 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.imshow(img)
-    plt.imshow(preds_up.cpu().squeeze().numpy(), 'gray', interpolation='none', alpha=0.5)
+    plt.imshow(preds_up.cpu().squeeze().numpy(), 'magma', interpolation='none', alpha=0.5)
     plt.axis('off')
     img_name = args.img_path
     img_name = img_name.split('/')[-1].split('.')[0]
