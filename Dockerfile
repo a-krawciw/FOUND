@@ -48,7 +48,7 @@ RUN apt update && apt install -q -y python3 python3-distutils python3-pip python
 ## Switch to specified user to create directories
 USER ${USERID}:${GROUPID}
 
-RUN curl -o $HOMEDIR/found_requirements.txt https://raw.githubusercontent.com/valeoai/FOUND/main/requirements.txt
+RUN curl -o $HOMEDIR/found_requirements.txt https://raw.githubusercontent.com/a-krawciw/FOUND/main/requirements.txt
 
 USER 0:0
 RUN pip3 install --upgrade pip

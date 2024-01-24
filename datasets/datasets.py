@@ -64,6 +64,11 @@ def set_dataset_dir(dataset_name, root_dir):
         img_dir = dataset_dir
         gt_dir = dataset_dir
 
+    elif dataset_name == "ouster_images_intensity":
+        dataset_dir = os.path.join(root_dir, "ouster_range")
+        img_dir = os.path.join(dataset_dir, "intensities")
+        gt_dir = os.path.join(dataset_dir, "intensities")
+
     elif dataset_name == "range_images_train":
         dataset_dir = os.path.join(root_dir, "range_images_train")
         img_dir = os.path.join(dataset_dir, "range")
@@ -399,7 +404,7 @@ class FoundDataset(Dataset):
                 img = img.convert("RGB")
                 im_name = img_path.split("/")[-1]
                 mask_gt = Image.open(
-                    os.path.join(self.gt_dir, im_name.replace(".jpg", ".png"))
+                    os.path.join(self.gt_dir, im_name)
                 ).convert("L")
 
         if self.for_eval:
